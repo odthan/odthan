@@ -1,42 +1,26 @@
-import Link from 'next/link';
-import { requireStaff } from '@/lib/auth';
+import { checkPerm } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
-import { Card, Empty, PageHead, Pill, Stat } from '@/components/admin-ui';
-import { BtnLink } from '@/components/admin-ui';
+import { Card, Empty, Flash, Forbidden, PageHead } from '@/components/admin-ui';
+import { ConfirmButton } from '@/components/ConfirmButton';
+import { deleteClientAccount } from '../actions';
+import { cleanQuery } from '@/lib/data';
 
-export const metadata = { title: 'Dashboard' };
-export default async function Dashboard() {
-  const a = await requireStaff(); const can = (p: string) => a.permissions.includes(p); const supabase = await createClient();
-  const cnt = async (q: any) => (await q).count ?? 0;
-  const head = { count: 'exact' as const, head: true };
-  const now = new Date(); const from = new Date(now.getTime() - 30 * 86400000);
-  const [pubServices, activeCats, clients, reqTotal, reqNew, reqDone, summary, recent, logs] = await Promise.all([
-    can('services.manage') ? cnt(supabase.from('services').select('id', head).eq('status', 'published').eq('is_active', true)) : null,
-    can('categories.manage') || can('services.manage') ? cnt(supabase.from('service_categories').select('id', head).eq('is_active', true)) : null,
-    can('clients.view') ? cnt(supabase.from('profiles').select('id', head)) : null,
-    can('requests.view') ? cnt(supabase.from('service_requests').select('id', head)) : null,
-    can('requests.view') ? cnt(supabase.from('service_requests').select('id', head).eq('status', 'new')) : null,
-    can('requests.view') ? cnt(supabase.from('service_requests').select('id', head).eq('status', 'completed')) : null,
-    can('analytics.view') ? supabase.rpc('analytics_summary', { p_from: from.toISOString(), p_to: new Date(now.getTime() + 86400000).toISOString() }).then((r) => r.data as any) : null,
-    can('requests.view') ? supabase.from('service_requests').select('id,reference,project_name,status,created_at').order('created_at', { ascending: false }).limit(5).then((r) => r.data ?? []) : null,
-    can('logs.view') ? supabase.from('admin_activity_logs').select('id,action,entity,created_at').order('created_at', { ascending: false }).limit(5).then((r) => r.data ?? []) : null,
-  ]);
-  const S = (label: string, v: number | null, extra?: { tone?: 'brand'; hint?: string }) => (v === null ? null : <Stat label={label} value={v} {...extra} />);
+export const metadata = { title: 'Clients' };
+export default async function ClientsAdmin({ searchParams }: { searchParams: Promise<{ q?: string; m?: string; e?: string }> }) {
+  const a = await checkPerm('clients.view'); if (!a) return <Forbidden />;
+  const sp = await searchParams; const supabase = await createClient();
+  let q = supabase.from('profiles').select('id,full_name,email,country,phone,created_at,deletion_requested_at').order('created_at', { ascending: false }).limit(200);
+  const t = cleanQuery(sp.q ?? ''); if (t) q = q.or(`full_name.ilike.%${t}%,email.ilike.%${t}%,country.ilike.%${t}%`);
+  const { data } = await q;
   return (
     <>
-      <PageHead title="Dashboard" sub="Chiffres calculés à partir des données réelles de la base." action={can('services.manage') ? <BtnLink href="/admin/services/new">+ Ajouter un service</BtnLink> : undefined} />
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {S('Services publiés', pubServices)}{S('Catégories actives', activeCats)}{S('Comptes clients', clients)}{S('Demandes reçues', reqTotal)}
-        {S('Demandes non traitées', reqNew, { tone: 'brand', hint: 'statut « Nouvelle »' })}{S('Demandes terminées', reqDone)}
-        {summary && <Stat label="Visites (30 j)" value={summary.page_views} hint="pages vues mesurées" />}
-      </div>
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        {recent && <Card><div className="mb-3 flex items-center justify-between"><h2 className="font-bold">Demandes récentes</h2><Link href="/admin/requests" className="text-sm font-semibold text-brand">Tout voir</Link></div>
-          {recent.length === 0 ? <p className="text-sm text-neutral-500">Aucune demande pour le moment.</p> : <ul className="divide-y">{recent.map((r: any) => <li key={r.id}><Link href={`/admin/requests/${r.id}`} className="flex items-center justify-between gap-2 py-3"><span className="min-w-0"><span className="block truncate font-medium">{r.project_name}</span><span className="text-xs text-neutral-500">{r.reference}</span></span><Pill s={r.status} /></Link></li>)}</ul>}</Card>}
-        {summary && <Card><h2 className="mb-3 font-bold">Services les plus consultés (30 j)</h2>{summary.top_services.length === 0 ? <p className="text-sm text-neutral-500">Aucune consultation mesurée.</p> : <ol className="space-y-2 text-sm">{summary.top_services.slice(0, 5).map((s: any) => <li key={s.label} className="flex justify-between"><span>{s.label}</span><strong>{s.value}</strong></li>)}</ol>}</Card>}
-        {logs && <Card><h2 className="mb-3 font-bold">Activité récente de l’administration</h2>{logs.length === 0 ? <p className="text-sm text-neutral-500">Aucune activité.</p> : <ul className="space-y-2 text-sm">{logs.map((l: any) => <li key={l.id}><span className="font-medium">{l.action}</span> <span className="text-xs text-neutral-400">{new Date(l.created_at).toLocaleString('fr-FR')}</span></li>)}</ul>}</Card>}
-      </div>
-      {!pubServices && !reqTotal && !summary && !recent && <Empty>Bienvenue. Utilisez le menu pour accéder à vos sections.</Empty>}
+      <Flash m={sp.m} e={sp.e} />
+      <PageHead title="Clients" sub={`${(data ?? []).length} compte(s) affiché(s)`} />
+      <form className="mb-4 flex gap-2" role="search"><input name="q" defaultValue={sp.q} placeholder="Nom, e-mail, pays…" className="min-h-11 flex-1 rounded-xl border border-neutral-300 px-3 text-base sm:text-sm" /><button className="min-h-11 rounded-xl bg-ink px-5 text-sm font-semibold text-white">Rechercher</button></form>
+      {(data ?? []).length === 0 ? <Empty>Aucun compte.</Empty> : <ul className="space-y-3">{data!.map((c) => (
+        <li key={c.id}><Card><p className="font-bold">{c.full_name || '(sans nom)'} {c.deletion_requested_at && <span className="ml-1 rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-800">Suppression demandée</span>}</p>
+          <p className="text-sm text-neutral-600">{c.email}{c.phone ? ` · ${c.phone}` : ''}{c.country ? ` · ${c.country}` : ''}</p><p className="text-xs text-neutral-400">Inscrit le {new Date(c.created_at).toLocaleDateString('fr-FR')}</p>
+          {c.deletion_requested_at && a.permissions.includes('users.manage') && <form action={deleteClientAccount} className="mt-3"><input type="hidden" name="id" value={c.id} /><ConfirmButton message={`Supprimer définitivement le compte de ${c.email} et toutes ses données (demandes, messages, fichiers) ? Action irréversible.`} className="min-h-10 rounded-lg border border-red-300 px-3 text-sm font-semibold text-red-700">Supprimer le compte et les données</ConfirmButton></form>}</Card></li>))}</ul>}
     </>
   );
 }
