@@ -83,6 +83,9 @@ npm run test:db                         # migrations + 95 contrôles RLS sur Pos
 ### Test manuel après déploiement
 1. `/register` → e-mail reçu → lien → `/login`. 2. `bootstrap_super_admin`. 3. `/admin/services/new` → publier → le service apparaît sur `/` sans redéploiement. 4. Avec un 2ᵉ compte : envoyer une demande → l'admin reçoit cloche + son + (Push) ; répondre → le client est notifié. 5. Un 2ᵉ client ne voit pas la demande du 1ᵉʳ. 6. Installer la PWA, couper le réseau : page hors-ligne, aucune modification « fantôme ». 7. Vérifier le code source de la page : aucune clé secrète.
 
+## Google Play (Android)
+Voir **`docs/ANDROID-GOOGLE-PLAY.md`** (stratégie TWA, génération de l'AAB depuis un téléphone, fiche, sécurité des données, suppression de compte) et le dossier `play-store/` (icône, image de présentation, textes).
+
 ## Sécurité — résumé
 RLS activé sur toutes les tables (jamais désactivé) · privilèges de colonnes (un client ne peut ni choisir son statut, ni modifier `email`/rôles, ni insérer une notification) · `service_name` des demandes réécrit par trigger · garde-fous sur les rôles (pas d'auto-promotion, dernier SUPER_ADMIN protégé, seul un SUPER_ADMIN gère ADMIN/SUPER_ADMIN) · buckets avec taille/MIME limités, pièces jointes privées + URLs signées 5 min · `getUser()` (jeton validé) dans le middleware · en-têtes de sécurité · `noindex` sur admin/compte/auth.
 
