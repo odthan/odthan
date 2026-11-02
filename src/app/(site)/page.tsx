@@ -72,7 +72,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
           ))}
         </div>
       </section>
-
+      <SosyalSection links={social} />
       <section id="about" className="mx-auto max-w-3xl scroll-mt-20 px-4 pt-16 text-center">
         <h2 className="text-2xl font-bold md:text-3xl">{t.about.title}</h2>
         <p className="mt-4 text-neutral-600">{t.about.text}</p>
