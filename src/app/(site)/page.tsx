@@ -5,6 +5,8 @@ import { isConfigured } from '@/lib/env';
 import { ServiceCard } from '@/components/ServiceCard';
 import { Icon } from '@/components/Icon';
 import { LogoMark } from '@/components/Logo';
+import { SosyalSection } from '@/components/SosyalSection';
+import { getSocialLinks } from '@/lib/sosyal-data';
 
 export const dynamic = 'force-dynamic'; // données toujours fraîches : un service publié apparaît immédiatement
 
@@ -12,7 +14,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
   const { t } = await getDict();
   const sp = await searchParams;
   if (!isConfigured()) return (
-    <div className="mx-auto max-w-xl px-4 py-24 text-center"><h1 className="text-2xl font-bold">{t.common.setupTitle}</h1><p className="mt-3 text-neutral-600">{t.common.setupText}</p></div>
+  const [categories, services, social] = await Promise.all([getPublicCategories(), searchPublicServices({ q: sp.q, category: sp.cat }), getSocialLinks()]);
   );
   const [categories, services] = await Promise.all([getPublicCategories(), searchPublicServices({ q: sp.q, category: sp.cat })]);
   const searching = Boolean(sp.q || sp.cat);
