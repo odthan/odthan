@@ -14,7 +14,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   const wa = settings.contact?.whatsapp_url || 'https://wa.me/50940894038';
   const links = [
     { href: '/', label: t.nav.home }, { href: '/#services', label: t.nav.services }, { href: '/#how', label: t.nav.how },
-    { href: '/#about', label: t.nav.about }, { href: '/contact', label: t.nav.contact },
+    { href: '/#about', label: t.nav.about }, { href: '/contact', label: t.nav.contact }, { href: '/sosyal', label: 'Swiv nou' },
   ];
   const langForm = (
     <form action={setLang} className="flex overflow-hidden rounded-lg border border-neutral-300 text-xs font-semibold" aria-label="Langue / Lang">
