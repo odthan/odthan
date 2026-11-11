@@ -13,14 +13,19 @@ export const dynamic = 'force-dynamic'; // données toujours fraîches : un serv
 export default async function Home({ searchParams }: { searchParams: Promise<{ q?: string; cat?: string }> }) {
   const { t } = await getDict();
   const sp = await searchParams;
-  if (!isConfigured()) return (
-  /* ton JSX "non configuré" ici (celui qui était avant) */
-);
-const [categories, services, social] = await Promise.all([
-  getPublicCategories(),
-  searchPublicServices({ q: sp.q, category: sp.cat }),
-  getSocialLinks(),
-]);
+  if (!isConfigured()) {
+    return (
+      <div className="mx-auto max-w-xl px-4 py-20 text-center">
+        <h1 className="text-2xl font-bold">Site non configuré</h1>
+        <p className="mt-3 text-neutral-600">Les variables d'environnement sont manquantes.</p>
+      </div>
+    );
+  }
+  const [categories, services, social] = await Promise.all([
+    getPublicCategories(),
+    searchPublicServices({ q: sp.q, category: sp.cat }),
+    getSocialLinks(),
+  ]);
   const searching = Boolean(sp.q || sp.cat);
   return (
     <>
