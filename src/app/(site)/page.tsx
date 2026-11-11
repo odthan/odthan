@@ -14,9 +14,13 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
   const { t } = await getDict();
   const sp = await searchParams;
   if (!isConfigured()) return (
-  const [categories, services, social] = await Promise.all([getPublicCategories(), searchPublicServices({ q: sp.q, category: sp.cat }), getSocialLinks()]);
-  );
-  const [categories, services] = await Promise.all([getPublicCategories(), searchPublicServices({ q: sp.q, category: sp.cat })]);
+  /* ton JSX "non configuré" ici (celui qui était avant) */
+);
+const [categories, services, social] = await Promise.all([
+  getPublicCategories(),
+  searchPublicServices({ q: sp.q, category: sp.cat }),
+  getSocialLinks(),
+]);
   const searching = Boolean(sp.q || sp.cat);
   return (
     <>
