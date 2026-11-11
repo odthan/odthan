@@ -17,7 +17,7 @@ const NAV: (NavItem & { perm?: string })[] = [
   { href: '/admin/notifications', label: 'Notifications', icon: 'bell' },
   { href: '/admin/analytics', label: 'Analytique', icon: 'chart', perm: 'analytics.view' },
   { href: '/admin/users', label: 'Utilisateurs & rôles', icon: 'shield', perm: 'users.manage' },
-  { href: '/admin/sosyal', label: 'Jesyon ODTHAN SOSYAL', icon: 'users' },
+  { href: '/admin/sosyal', label: 'Jesyon ODTHAN SOSYAL', icon: 'users', perm: 'settings.manage' },
   { href: '/admin/settings', label: 'Paramètres', icon: 'settings', perm: 'settings.manage' },
 ];
 
